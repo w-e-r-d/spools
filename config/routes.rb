@@ -18,8 +18,10 @@ Rails.application.routes.draw do
   get '/auth/spotify/callback', to: 'home#spotify'
 
   get 'home/index'
+
   get 'home/details'
-  post 'home/details'
+
+  post 'home/reverse_playlist'
 
   root "home#index"
 

@@ -7,10 +7,9 @@ class HomeController < ApplicationController
     pp artists
 
     arctic_monkeys = artists.first
-    pp arctic_monkeys.popularity      #=> 74
-    pp arctic_monkeys.genres          #=> ["Alternative Pop/Rock", "Indie", ...]
+    pp arctic_monkeys.popularity #=> 74
+    pp arctic_monkeys.genres #=> ["Alternative Pop/Rock", "Indie", ...]
     pp arctic_monkeys.top_tracks(:US) #=> (Track array)
-
 
   end
 
@@ -20,20 +19,26 @@ class HomeController < ApplicationController
 
     @spotify_user = RSpotify::User.new(dummy.spotify_hash)
 
-    if params[:playlist_id].present?
-
-      @playlist_to_show = @spotify_user.playlists.detect { |pl| pl.id == params[:playlist_id] }
-
-      raise "Playlist not found for this user" unless @playlist_to_show
-
-      pp "Doing something with a selected playlist: #{@playlist_to_show.name}"
-
-      # PUT REVERSE HERE
-    end
-
     # spotify_user = RSpotify::User.new(request.env['omniauth.auth'])
     # pp spotify_user
 
+  end
+
+  def reverse_playlist
+
+    dummy = Dummy.first
+
+    @spotify_user = RSpotify::User.new(dummy.spotify_hash)
+
+    pp @spotify_user
+
+    @playlist = @spotify_user.playlists.detect { |pl| pl.id == params[:playlist][:playlist_id] }
+
+    raise "Playlist not found for this user" unless @playlist
+
+    pp "Doing something with a selected playlist: #{@playlist.name}"
+
+    @playlist.replace_tracks!(@playlist.tracks.reverse)
   end
 
   def spotify
@@ -48,7 +53,7 @@ class HomeController < ApplicationController
 
     # Access private data
     spotify_user.country #=> "US"
-    spotify_user.email   #=> "example@email.com"
+    spotify_user.email #=> "example@email.com"
 
     # Create playlist in user's Spotify account
     playlist = spotify_user.create_playlist!('my-awesome-playlist')

@@ -1,29 +1,9 @@
-<H1>Hello Again</H1>
-<br/>
-<%= pp "HERE2 #{@playlist_to_show}" %>
-<br/>
-<%= "HERE #{@playlist_to_show.inspect}" %>
-<br/>
-<H1>DEBUG <%= @spotify_user.display_name %></H1>
-<br/>
-
-<H1>TWO <%= debug(@playlist_to_show) %> AFTER</H1>
+<H1>Overview Details Screen</H1>
 
 <br/>
 
-<pre>
-<%= "X" + @playlist_to_show&.name.to_s + "Y"%>
-</pre>
-
-<% if @playlist_to_show.present? %>
-  <H2>Doing some stuff with Playlist: <%= @playlist_to_show.name %></H2>
-<% else %>
-  <H2>No Playlist</H2>
-<% end %>
-
-<br/>
-
-<%= form_with do |f| %>
+<H3>Reverse Paylist Form</H3>
+<%= form_for :playlist, url: home_reverse_playlist_path do |f| %>
   <%= f.select :playlist_id, playlists_for_select(@spotify_user), prompt: "Select a playlist" %>
-  <%= f.submit "Do Something" %>
+  <%= f.submit "Reverse" %>
 <% end %>
