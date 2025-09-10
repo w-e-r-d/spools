@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resource :session
+  resources :passwords, param: :token
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -13,7 +15,11 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
+  get '/auth/spotify/callback', to: 'home#spotify'
+
   get 'home/index'
+  get 'home/details'
+  post 'home/details'
 
   root "home#index"
 
