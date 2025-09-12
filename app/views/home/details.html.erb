@@ -198,18 +198,60 @@
     }
 
     .tool-card{
-        display:flex;
-        flex-direction:column;
-        gap:4px;
-        padding:16px 18px;
+        position: relative;
+        display:flex; flex-direction:column; gap:4px;
+        padding:16px 18px; color:#fff; border:0; border-radius:14px;
         background: var(--card);
-        color:#fff;
-        border:0;
-        border-radius:14px;
-        cursor:pointer;
         box-shadow:0 2px 6px rgba(0,0,0,.15);
-        text-align:left;
-        position:relative;
+        cursor:pointer; text-align:left;
+        transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--scale, 1));
+        transition:
+                transform 220ms cubic-bezier(.2,.7,.2,1),
+                filter 220ms ease,
+                box-shadow 220ms ease;
+        will-change: transform;
+        overflow: hidden;
+    }
+
+    /* slight pop + brightness on hover */
+    .tool-card:hover,
+    .tool-card:focus-visible{
+        --scale: 1.03;
+        filter: brightness(1.06) saturate(1.02);
+        box-shadow: 0 10px 24px rgba(0,0,0,.22);
+    }
+
+    /* highlight sweep */
+    .tool-card::after{
+        content:"";
+        position:absolute; inset:-60% -140% auto auto;
+        width: 140%; height: 220%;
+        background: linear-gradient(120deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,.28) 18%,
+        rgba(255,255,255,.65) 28%,
+        rgba(255,255,255,.18) 38%,
+        rgba(255,255,255,0) 55%);
+        transform: translateX(-120%) skewX(-20deg);
+        opacity: 0; pointer-events:none;
+    }
+
+    .tool-card:hover::after,
+    .tool-card:focus-visible::after{
+        animation: card-shine 650ms ease forwards;
+        opacity: 1;
+    }
+
+    @keyframes card-shine{
+        from { transform: translateX(-120%) skewX(-20deg); }
+        to   { transform: translateX(220%)  skewX(-20deg); }
+    }
+
+    /* motion-reduce accessibility */
+    @media (prefers-reduced-motion: reduce){
+        .tool-card{ transition: transform 120ms ease; }
+        .tool-card:hover::after,
+        .tool-card:focus-visible::after{ animation: none; opacity: 0; }
     }
     .tool-title{ font-weight:600; }
     .tool-blurb{ opacity:.9; font-size:.95rem; }
