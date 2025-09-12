@@ -1,9 +1,397 @@
-<H1>Overview Details Screen</H1>
+<h1>Spools</h1>
 
-<br/>
+<!-- automate -->
+<section class="section section-automate">
+  <div class="section-header">
+    <h2>Automate</h2>
+    <p class="section-sub">Chain multiple tools into a reusable flow.</p>
+  </div>
+  <div class="tool-grid">
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Workflow Builder">
+      <span class="tool-title">Workflow Builder</span>
+      <span class="tool-blurb">Design multi-step playlist workflows.</span>
+      <span class="badge badge-advanced">Advanced</span>
+    </button>
+  </div>
+</section>
 
-<H3>Reverse Paylist Form</H3>
-<%= form_for :playlist, url: home_reverse_playlist_path do |f| %>
-  <%= f.select :playlist_id, playlists_for_select(@spotify_user), prompt: "Select a playlist" %>
-  <%= f.submit "Reverse" %>
-<% end %>
+<!-- build -->
+<section class="section section-build">
+  <div class="section-header">
+    <h2>Build</h2>
+    <p class="section-sub">Create, collect, and combine playlists.</p>
+  </div>
+
+  <div class="tool-grid">
+    <button class="tool-card" data-modal-open="coming-modal" data-title="CSV to Playlist">
+      <span class="tool-title">CSV to Playlist</span>
+      <span class="tool-blurb">Create a playlist from a CSV of tracks.</span>
+    </button>
+
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Discography Builder">
+      <span class="tool-title">Discography Builder</span>
+      <span class="tool-blurb">Build a complete artist catalog.</span>
+    </button>
+
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Playlist Algebra">
+      <span class="tool-title">Playlist Algebra</span>
+      <span class="tool-blurb">Union, intersect, and subtract playlists.</span>
+      <span class="badge badge-advanced">Advanced</span>
+    </button>
+
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Export Playlists from Public Profile">
+      <span class="tool-title">Export Playlists from Public Profile</span>
+      <span class="tool-blurb">Clone someone’s public playlists.</span>
+    </button>
+  </div>
+</section>
+
+<!-- organize and clean -->
+<section class="section section-organize">
+  <div class="section-header">
+    <h2>Organize &amp; Clean</h2>
+    <p class="section-sub">Edit and transform what’s already there.</p>
+  </div>
+
+  <div class="tool-grid">
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Filter Playlist">
+      <span class="tool-title">Filter Playlist</span>
+      <span class="tool-blurb">Include/exclude by artist, year, etc.</span>
+    </button>
+
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Sort Playlist">
+      <span class="tool-title">Sort Playlist</span>
+      <span class="tool-blurb">Sort by album, popularity, tempo, etc.</span>
+    </button>
+
+    <!-- reverse spool [FUNCTIONAL] -->
+    <button class="tool-card" data-modal-open="reverse-modal">
+      <span class="tool-title">Reverse Playlist Order</span>
+      <span class="tool-blurb">Flip the track order.</span>
+    </button>
+
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Deduplicate Playlist">
+      <span class="tool-title">Deduplicate Playlist</span>
+      <span class="tool-blurb">Remove exact & near-duplicate tracks.</span>
+    </button>
+
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Remove Liked Songs from a Playlist">
+      <span class="tool-title">Remove Liked Songs</span>
+      <span class="tool-blurb">Strip tracks you’ve liked.</span>
+<!--      <span class="badge badge-destructive">Destructive</span>-->
+    </button>
+
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Remove Non-Liked Songs from a Playlist">
+      <span class="tool-title">Remove Non-Liked Songs</span>
+      <span class="tool-blurb">Keep only tracks you’ve liked.</span>
+<!--      <span class="badge badge-destructive">Destructive</span>-->
+    </button>
+  </div>
+</section>
+
+<!-- export & assets section -->
+<section class="section section-export">
+  <div class="section-header">
+    <h2>Export &amp; Assets</h2>
+    <p class="section-sub">Get your data out and into a workable format.</p>
+  </div>
+
+  <div class="tool-grid">
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Playlist to CSV">
+      <span class="tool-title">Playlist to CSV</span>
+      <span class="tool-blurb">Export tracks to a spreadsheet.</span>
+    </button>
+
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Export Lyrics">
+      <span class="tool-title">Export Lyrics</span>
+      <span class="tool-blurb">Export lyrics to a spreadsheet.</span>
+      <span class="badge">Requires Genius API</span>
+    </button>
+
+    <button class="tool-card" data-modal-open="coming-modal" data-title="Export Album Art">
+      <span class="tool-title">Export Album Art</span>
+      <span class="tool-blurb">Download cover art in bulk.</span>
+    </button>
+  </div>
+</section>
+
+<!-- reverse modal -->
+<dialog id="reverse-modal">
+  <div class="modal-header">
+    <h3>Reverse Playlist</h3>
+    <button class="close-btn" data-modal-close aria-label="Close">&times;</button>
+  </div>
+
+  <div class="modal-body">
+    <%= form_for :playlist, url: home_reverse_playlist_path do |f| %>
+      <!-- combobox -->
+      <div class="form-row">
+        <label for="playlist-combobox">Choose playlist (type to search, or paste URL/URI)</label>
+
+        <!-- input -->
+        <input
+          id="playlist-combobox"
+          name="playlist[uri_or_url]"
+          type="text"
+          placeholder="Start typing a name… or paste a Spotify URL/URI"
+          autocomplete="off"
+          role="combobox"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          aria-controls="playlist-list"
+        >
+
+        <!-- hidden field for the id when a suggestion is chosen -->
+        <input type="hidden" id="playlist_id" name="playlist[playlist_id]" value="">
+
+        <!-- results dropdown -->
+        <ul id="playlist-list" class="combo-list" role="listbox" aria-label="Playlists"></ul>
+
+        <!-- data for js -->
+        <script type="application/json" id="playlist-data">
+          <%= raw(@playlist_options.to_json) %>
+        </script>
+      </div>
+
+      <div class="actions">
+        <%= f.submit "Reverse", class: "primary" %>
+        <button type="button" class="secondary" data-modal-close>Cancel</button>
+      </div>
+    <% end %>
+  </div>
+</dialog>
+
+<!-- coming soon modal -->
+<dialog id="coming-modal">
+  <div class="modal-header">
+    <h3 class="tool-title">Coming soon</h3>
+    <button class="close-btn" data-modal-close aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+    <p>This tool is still under construction.</p>
+  </div>
+</dialog>
+
+<style>
+    :root{
+        --ink:#2b2b2b;
+        --accent:#7ec3a8;
+        --pop:#fd9484;
+        --card:#0c7fa3;
+    }
+
+    /* sections */
+    .section{ margin: 10px 0 28px; }
+    .section-header{ display:flex; align-items:baseline; gap:12px; margin-bottom:10px; }
+    .section-header h2{ margin:0; font-size:1.2rem; color:var(--ink); }
+    .section-sub{ margin:0; color:#666; font-size:.95rem; }
+    .section-automate { --card: #f1cb62; }
+    .section-build    { --card: #7ec3a8; }
+    .section-organize { --card: #708c50; }
+    .section-export   { --card: #fd9484; }
+
+    /* card button grid */
+    .tool-grid{
+        display:grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap:14px;
+    }
+
+    .tool-card{
+        display:flex;
+        flex-direction:column;
+        gap:4px;
+        padding:16px 18px;
+        background: var(--card);
+        color:#fff;
+        border:0;
+        border-radius:14px;
+        cursor:pointer;
+        box-shadow:0 2px 6px rgba(0,0,0,.15);
+        text-align:left;
+        position:relative;
+    }
+    .tool-title{ font-weight:600; }
+    .tool-blurb{ opacity:.9; font-size:.95rem; }
+    .badge{
+        position:absolute; right:10px; top:10px;
+        font-size:.75rem; padding:3px 8px; border-radius:999px;
+        background:#fffef2; color:#0b3329;
+    }
+    .badge-advanced{ background:#df5551; color:#FFFFFF; }
+    .badge-destructive{ background:#ffd3d3; color:#7a1f1f; }
+
+    /* dialogs */
+    dialog{
+        width:min(720px, 95vw);
+        min-height:30vh;
+        max-height:90vh;
+        border:0; border-radius:14px; padding:0;
+    }
+    dialog::backdrop{ background: rgba(0,0,0,.45); }
+    .modal-header{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid #eee; }
+    .modal-body{ padding:16px 18px 20px; overflow:visible; }
+    .modal-body.dropdown-open{ padding-bottom:32vh; }
+    .close-btn{ border:0; background:transparent; font-size:22px; line-height:1; cursor:pointer; }
+
+    /* combobox */
+    .form-row{ position:relative; display:flex; flex-direction:column; gap:6px; margin: 10px 0 18px; }
+    #playlist-combobox{ padding:10px 12px; border:1px solid #ccc; border-radius:8px; }
+
+    .combo-list{
+        position:absolute; top: calc(100% + 6px); left:0; right:0;
+        max-height: min(40vh, 320px); overflow:auto;
+        background:#fff; border:1px solid #ddd; border-radius:10px;
+        box-shadow:0 8px 24px rgba(0,0,0,.12);
+        list-style:none; margin:0; padding:6px 0;
+        display:none; z-index:1000;
+    }
+    .combo-item{ padding:8px 12px; cursor:pointer; }
+    .combo-item[aria-selected="true"], .combo-item:hover{ background:#f5f5f5; }
+
+    .actions{ display:flex; gap:10px; }
+    .primary{ padding:8px 12px; border:0; border-radius:8px; cursor:pointer; background:var(--accent); }
+    .secondary{ padding:8px 12px; border:1px solid #ccc; border-radius:8px; background:#fff; cursor:pointer; }
+</style>
+
+<script>
+    // open/close modals
+    document.addEventListener('click', (e) => {
+        const openTarget = e.target.closest('[data-modal-open]');
+        if (openTarget) {
+            const id = openTarget.getAttribute('data-modal-open');
+            const dlg = document.getElementById(id);
+            if (id === 'coming-modal') {
+                const title = openTarget.getAttribute('data-title') || 'Coming soon';
+                const h = dlg.querySelector('.tool-title');
+                if (h) h.textContent = title;
+            }
+            if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
+        }
+        if (e.target.closest('[data-modal-close]')) {
+            const dlg = e.target.closest('dialog');
+            if (dlg) dlg.close();
+        }
+    });
+
+    // close dialogs by clicking backdrop
+    document.querySelectorAll('dialog').forEach(dlg => {
+        dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    });
+
+    // reverse modal combobox
+    (function () {
+        const modal = document.getElementById('reverse-modal');
+        if (!modal) return;
+
+        const input   = modal.querySelector('#playlist-combobox');
+        const list    = modal.querySelector('#playlist-list');
+        const hidden  = modal.querySelector('#playlist_id');
+        const modalBody = modal.querySelector('.modal-body');
+        const rawJSON = modal.querySelector('#playlist-data')?.textContent || '[]';
+        /** @type {[string, string][]} */
+        const data    = JSON.parse(rawJSON);
+
+        let open = false;
+        let items = [];
+        let activeIndex = -1;
+
+        function openList() {
+            if (!open) {
+                list.style.display = 'block';
+                input.setAttribute('aria-expanded', 'true');
+                modalBody?.classList.add('dropdown-open');
+                open = true;
+            }
+        }
+        function closeList() {
+            if (open) {
+                list.style.display = 'none';
+                input.setAttribute('aria-expanded', 'false');
+                modalBody?.classList.remove('dropdown-open');
+                activeIndex = -1;
+                open = false;
+            }
+        }
+
+        function render(q = '') {
+            const query = q.trim().toLowerCase();
+            items = data.filter(([label]) => !query || label.toLowerCase().includes(query));
+            const maxRender = 500;
+            if (items.length > maxRender) items = items.slice(0, maxRender);
+
+            list.innerHTML = '';
+            items.forEach(([label, id], idx) => {
+                const li = document.createElement('li');
+                li.className = 'combo-item';
+                li.setAttribute('role', 'option');
+                li.setAttribute('data-id', id);
+                li.setAttribute('data-label', label);
+                li.id = `combo-opt-${idx}`;
+                li.textContent = label;
+
+                li.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    choose(id, label);
+                });
+
+                list.appendChild(li);
+            });
+
+            if (items.length) openList(); else closeList();
+        }
+
+        function highlight(index) {
+            const children = Array.from(list.children);
+            children.forEach((el, i) => el.setAttribute('aria-selected', i === index ? 'true' : 'false'));
+            activeIndex = index;
+            if (index >= 0 && children[index]) {
+                children[index].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function choose(id, label) {
+            input.value = label;
+            hidden.value = id;
+            closeList();
+        }
+
+        input.addEventListener('input', () => {
+            hidden.value = '';
+            render(input.value);
+        });
+
+        input.addEventListener('focus', () => { render(input.value); });
+
+        // close on blur
+        input.addEventListener('blur', () => { setTimeout(closeList, 80); });
+
+        input.addEventListener('keydown', (e) => {
+            if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+                render(input.value);
+                e.preventDefault();
+                highlight(0);
+                return;
+            }
+            if (!open) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = Math.min(activeIndex + 1, items.length - 1);
+                highlight(next);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = Math.max(activeIndex - 1, 0);
+                highlight(prev);
+            } else if (e.key === 'Enter') {
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    const [label, id] = items[activeIndex];
+                    choose(id, label);
+                    e.preventDefault();
+                }
+            } else if (e.key === 'Escape') {
+                closeList();
+            }
+        });
+    })();
+</script>

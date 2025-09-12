@@ -1,88 +1,123 @@
 class HomeController < ApplicationController
-  def index
-    puts "Home Index - Chris was here"
-
-    artists = RSpotify::Artist.search('Arctic Monkeys')
-
-    pp artists
-
-    arctic_monkeys = artists.first
-    pp arctic_monkeys.popularity #=> 74
-    pp arctic_monkeys.genres #=> ["Alternative Pop/Rock", "Indie", ...]
-    pp arctic_monkeys.top_tracks(:US) #=> (Track array)
-
-  end
-
+  # ----- details -----
   def details
-    pp "Details Called"
-    dummy = Dummy.first
+    Rails.logger.info "Details Called"
 
+    dummy = Dummy.first
     @spotify_user = RSpotify::User.new(dummy.spotify_hash)
 
-    # spotify_user = RSpotify::User.new(request.env['omniauth.auth'])
-    # pp spotify_user
-
+    @playlists = fetch_all_playlists(@spotify_user)
+    @playlist_options =
+      @playlists
+        .map { |pl| ["#{pl.name} — #{pl.owner&.display_name || pl.owner&.id}", pl.id] }
+        .sort_by { |(label, _)| label.downcase }
   end
 
+  # ----- reverse_playlist spool -----
   def reverse_playlist
-
     dummy = Dummy.first
-
     @spotify_user = RSpotify::User.new(dummy.spotify_hash)
 
-    pp @spotify_user
+    # combobox
+    raw_text   = params.dig(:playlist, :uri_or_url).presence
+    select_id  = params.dig(:playlist, :playlist_id).presence
 
-    @playlist = @spotify_user.playlists.detect { |pl| pl.id == params[:playlist][:playlist_id] }
+    # parse id else fallback to selected
+    playlist_id = extract_playlist_id(raw_text) || select_id
+    unless playlist_id
+      redirect_to home_details_path, alert: "Please choose a playlist or paste a valid Spotify URL/URI."
+      return
+    end
 
-    raise "Playlist not found for this user" unless @playlist
+    # find among user playlists
+    playlist = find_user_playlist(@spotify_user, playlist_id)
 
-    pp "Doing something with a selected playlist: #{@playlist.name}"
+    # fallback to direct lookup
+    if playlist.nil?
+      begin
+        playlist = RSpotify::Playlist.find(playlist_id)
+      rescue => _
+        playlist = nil
+      end
+    end
 
-    @playlist.replace_tracks!(@playlist.tracks.reverse)
+    unless playlist
+      redirect_to home_details_path, alert: "Playlist not found or not accessible."
+      return
+    end
+
+    Rails.logger.info "Reversing playlist: #{playlist.name} (#{playlist.id})"
+
+    tracks = fetch_all_tracks(playlist)
+    begin
+      playlist.replace_tracks!(tracks.reverse)
+      redirect_to home_details_path, notice: "Reversed “#{playlist.name}” (#{tracks.size} tracks)."
+    rescue => e
+      redirect_to home_details_path, alert: "Couldn't reverse “#{playlist.name}”: #{e.message}"
+    end
   end
 
-  def spotify
-    spotify_user = RSpotify::User.new(request.env['omniauth.auth'])
-    # Now you can access user's private data, create playlists and much more
+  private
 
-    dummy = Dummy.first
-    dummy.spotify_hash = spotify_user.to_hash
-    dummy.save!
-
-    return
-
-    # Access private data
-    spotify_user.country #=> "US"
-    spotify_user.email #=> "example@email.com"
-
-    # Create playlist in user's Spotify account
-    playlist = spotify_user.create_playlist!('my-awesome-playlist')
-
-    # Add tracks to a playlist in user's Spotify account
-    tracks = RSpotify::Track.search('Know')
-    playlist.add_tracks!(tracks)
-    playlist.tracks.first.name #=> "Somebody That I Used To Know"
-
-    # Access and modify user's music library
-    spotify_user.save_tracks!(tracks)
-    spotify_user.saved_tracks.size #=> 20
-    spotify_user.remove_tracks!(tracks)
-
-    albums = RSpotify::Album.search('launeddas')
-    spotify_user.save_albums!(albums)
-    spotify_user.saved_albums.size #=> 10
-    spotify_user.remove_albums!(albums)
-
-    # Use Spotify Follow features
-    # spotify_user.follow(playlist)
-    # spotify_user.follows?(artists)
-    # spotify_user.unfollow(users)
-
-    # Get user's top played artists and tracks
-    # spotify_user.top_artists #=> (Artist array)
-    # spotify_user.top_tracks(time_range: 'short_term') #=> (Track array)
-
-    # Check doc for more
+  def fetch_all_playlists(user)
+    all = []
+    limit = 50
+    offset = 0
+    loop do
+      batch = user.playlists(limit: limit, offset: offset)
+      break if batch.nil? || batch.empty?
+      all.concat(batch)
+      break if batch.size < limit
+      offset += limit
+    end
+    all
   end
 
+  def fetch_all_tracks(playlist)
+    all = []
+    limit = 100
+    offset = 0
+    loop do
+      batch = playlist.tracks(limit: limit, offset: offset)
+      break if batch.nil? || batch.empty?
+      all.concat(batch)
+      break if batch.size < limit
+      offset += limit
+    end
+    all
+  end
+
+  def find_user_playlist(user, playlist_id)
+    limit = 50
+    offset = 0
+    loop do
+      batch = user.playlists(limit: limit, offset: offset)
+      break if batch.nil? || batch.empty?
+      found = batch.find { |pl| pl.id == playlist_id }
+      return found if found
+      break if batch.size < limit
+      offset += limit
+    end
+    nil
+  end
+
+  def extract_playlist_id(str)
+    return nil if str.blank?
+    s = str.strip
+
+    # id
+    return s if /\A[0-9A-Za-z]{22}\z/.match?(s)
+
+    # url
+    if s.include?("open.spotify.com/playlist/")
+      return s.split("playlist/").last.split(/[?\s]/).first
+    end
+
+    # uri
+    if s.start_with?("spotify:playlist:")
+      return s.split(":").last
+    end
+
+    nil
+  end
 end
